@@ -1,4 +1,6 @@
 WHITE = "#ffffff"
 BLACK = "#000000"
+SHADOW = "#9b9b9b"
 GRAY = "#ececec"
 BLUE = "#4269f6"
+RED = "#f54242"
