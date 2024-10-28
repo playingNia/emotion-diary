@@ -10,9 +10,10 @@ if not os.path.exists("diary.yaml"):
 with open("diary.yaml", 'r') as file:
     diary = yaml.safe_load(file)
 
-def get_diaries():
+def get_diaries(date):
     global diary
-    return diary
+    filtered_diary = {key: value for key, value in diary.items() if key.startswith(date)}
+    return filtered_diary
 
 def get_diary(date):
     global diary
