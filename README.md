@@ -1,3 +1,5 @@
+![logo](https://github.com/user-attachments/assets/e1064467-19de-4f49-bb3e-6943f5bff35b)
+
 OpenAI API key 발급 받기 : https://platform.openai.com/
 
 사이트 회원가입 및 로그인 후 Dashboard -> API keys -> Create new secret key 에서 신규 생성하기
