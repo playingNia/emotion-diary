@@ -1,8 +1,7 @@
-from color import BLACK, SHADOW, WHITE, GRAY, BLUE, RED
+from color import BLACK, SHADOW, WHITE, BLUE, RED
 import diary_manager
 
 import tkinter as tk
-from tkinter import messagebox
 import openai
 from datetime import datetime
 import os
@@ -34,6 +33,15 @@ class EmotionDiaryApp:
         btn = tk.Button(frame, text="완료", bg=BLUE, fg=WHITE, width=30, height=2, relief="flat", command=lambda: self.submit_api_key(entry.get()))
         btn.pack()
 
+    def submit_api_key(self, key):
+        if key == "":
+            return
+
+        with open("api-key.txt", 'w') as file:
+            file.write(key)
+
+        self.load_main_page()
+
     def load_main_page(self):
         self.clear_widgets()
 
@@ -43,8 +51,8 @@ class EmotionDiaryApp:
         title_label = tk.Label(title_frame, text="Emotion Diary", bg=WHITE, fg=BLACK, font=("Helvetica", 12))
         title_label.pack(side="left", anchor='w', fill='y', expand=True, padx=10, pady=10)
 
-        date = f"{datetime.now().year}.{datetime.now().month}.{datetime.now().day}"
-        add_diary_btn = tk.Button(title_frame, text='+', bg=BLUE, fg=WHITE, relief="flat", padx=4, command=lambda : self.open_diary_page(date))
+        today_date = f"{datetime.now().year}.{datetime.now().month}.{datetime.now().day}"
+        add_diary_btn = tk.Button(title_frame, text='+', bg=BLUE, fg=WHITE, relief="flat", padx=4, command=lambda : self.open_diary_page(today_date))
         add_diary_btn.pack(side="right", anchor='e', expand=True, padx=10)
 
         shadow_frame = tk.Frame(self.root, height=1, bg=SHADOW)
@@ -62,19 +70,82 @@ class EmotionDiaryApp:
 
         self.update_date_label()
 
-        self.diary_list_frame = tk.Frame(self.root, bg=WHITE)
-        self.diary_list_frame.pack(fill='x', pady=(20, 20), padx=10)
+        canvas_frame = tk.Frame(self.root, bg=WHITE)
+        canvas_frame.pack(fill="both", pady=(20, 20), padx=10, expand=True)
 
-        self.add_diary_element(self.date)
-        self.add_diary_element(self.date)
-        self.add_diary_element(self.date)
-        self.add_diary_element(self.date)
-        self.add_diary_element(self.date)
-        self.add_diary_element(self.date)
+        self.canvas = tk.Canvas(canvas_frame, bg=WHITE)
+        scrollbar = tk.Scrollbar(canvas_frame, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill='y')
+        self.canvas.pack(fill="both", expand=True)
 
-        # self.diary_listbox = tk.Listbox(self.root, width=50)
-        # self.diary_listbox.pack(pady=10)
-        # self.diary_listbox.bind("<Double-1>", self.open_diary_page)  # 더블 클릭으로 일기 열기
+        self.diary_list_frame = tk.Frame(self.canvas, bg=WHITE)
+        self.diary_list_frame.pack(fill='x')
+        self.window_id = self.canvas.create_window((0, 0), window=self.diary_list_frame, anchor="nw", width=self.canvas.winfo_width())
+        self.canvas.bind("<Configure>", self.on_resize)
+        self.diary_list_frame.bind("<Configure>", lambda event: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        self.render_diary_list()
+
+    def update_date_label(self):
+        self.date_label.config(text=f"{self.current_year}년 {self.current_month}월")
+
+    def previous_month(self):
+        if self.current_month == 1:
+            self.current_month = 12
+            self.current_year -= 1
+        else:
+            self.current_month -= 1
+        self.update_date_label()
+        self.clear_diary_list()
+        self.render_diary_list()
+
+    def next_month(self):
+        if self.current_month == 12:
+            self.current_month = 1
+            self.current_year += 1
+        else:
+            self.current_month += 1
+        self.update_date_label()
+        self.clear_diary_list()
+        self.render_diary_list()
+
+    def add_diary_element(self, date):
+        shadow_frame = tk.Frame(self.diary_list_frame, bg=SHADOW)
+        shadow_frame.pack(fill='x', pady=(0, 10))
+
+        frame = tk.Frame(shadow_frame, bg=WHITE)
+        frame.pack(fill='x', padx=(0, 2), pady=(0, 2))
+
+        line = tk.Frame(frame, width=7, bg=BLUE)
+        line.pack(side="left", fill='y')
+
+        content_frame = tk.Frame(frame, bg="white")
+        content_frame.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(5, 5))
+
+        date_label = tk.Label(content_frame, text=date, bg=WHITE, fg=BLACK, font=("Helvetica", 10))
+        date_label.pack(anchor='w')
+
+        content_label = tk.Label(content_frame, text=diary_manager.get_diary(date)[0][:20], bg=WHITE, fg=BLACK, font=("Helvetica", 8))
+        content_label.pack(anchor='w')
+
+        frame.bind("<Button-1>", lambda event: self.open_diary_page(date))
+        line.bind("<Button-1>", lambda event: self.open_diary_page(date))
+        content_frame.bind("<Button-1>", lambda event: self.open_diary_page(date))
+        date_label.bind("<Button-1>", lambda event: self.open_diary_page(date))
+        content_label.bind("<Button-1>", lambda event: self.open_diary_page(date))
+
+    def render_diary_list(self):
+        for date in diary_manager.get_diaries(f"{self.current_year}.{self.current_month}").keys():
+            self.add_diary_element(date)
+
+    def clear_diary_list(self):
+        for widget in self.diary_list_frame.winfo_children():
+            widget.destroy()
+
+    def on_resize(self, event):
+        canvas_width = event.width
+        self.canvas.itemconfig(self.window_id, width=canvas_width)
 
     def open_diary_page(self, date):
         self.clear_widgets()
@@ -135,54 +206,6 @@ class EmotionDiaryApp:
         self.ais_input.insert("1.0", diary_data[1])
         self.ais_input.config(state="disabled")
 
-    def submit_api_key(self, key):
-        if key == "":
-            return
-
-        with open("api-key.txt", 'w') as file:
-            file.write(key)
-
-        self.load_main_page()
-
-    def update_date_label(self):
-        self.date_label.config(text=f"{self.current_year}년 {self.current_month}월")
-
-    def previous_month(self):
-        if self.current_month == 1:
-            self.current_month = 12
-            self.current_year -= 1
-        else:
-            self.current_month -= 1
-        self.update_date_label()
-
-    def next_month(self):
-        if self.current_month == 12:
-            self.current_month = 1
-            self.current_year += 1
-        else:
-            self.current_month += 1
-        self.update_date_label()
-
-    def add_diary_element(self, date):
-        shadow_frame = tk.Frame(self.diary_list_frame, bg=SHADOW)
-        shadow_frame.pack(fill='x', pady=(0, 10))
-
-        frame = tk.Frame(shadow_frame, bg=WHITE)
-        frame.pack(fill='x', padx=(0, 2), pady=(0, 2))
-
-        line = tk.Frame(frame, width=7, bg=BLUE)
-        line.pack(side="left", fill='y')
-
-        content_frame = tk.Frame(frame, bg="white")
-        content_frame.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(5, 5))
-
-        date_label = tk.Label(content_frame, text=date, bg=WHITE, fg=BLACK, font=("Helvetica", 10))
-        date_label.pack(anchor='w')
-
-        content_label = tk.Label(content_frame, text=diary_manager.get_diary(date)[0][:20], bg=WHITE, fg=BLACK, font=("Helvetica", 8))
-        content_label.pack(anchor='w')
-
-
     def save_diary(self):
         diary_manager.set_diary(self.date, self.diary_input.get("1.0", "end-1c"), self.ais_input.get("1.0", "end-1c"))
 
@@ -198,7 +221,7 @@ class EmotionDiaryApp:
 
         response = openai.ChatCompletion.create(
             model="gpt-4o",
-            messages=[{"role": "system", "content": "유저가 작성한 감정 일기를 보고, 공감과 코멘트를 남겨 줘."},
+            messages=[{"role": "system", "content": "너의 이름은 '에이아'야. 유저가 작성한 감정 일기를 보고, 공감과 코멘트를 한국어로 친구처럼(말투를 친한 친구처럼) 남겨 줘."},
                       {"role": "user", "content": question}],
         )
 
@@ -218,6 +241,12 @@ app = EmotionDiaryApp(root)
 if not os.path.exists("api-key.txt"): app.load_api_key_page()
 else: app.load_main_page()
 
-root.protocol("WM_DELETE_WINDOW", lambda: diary_manager.save_diary())
+try:
+    pass
+finally:
+    root.protocol("WM_DELETE_WINDOW", lambda: (diary_manager.save_diary(), root.destroy()))
+
 root.mainloop()
+
+
 

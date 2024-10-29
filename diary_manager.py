@@ -18,7 +18,7 @@ def get_diaries(date):
 def get_diary(date):
     global diary
     if date not in diary:
-        return ()
+        return ("", "")
 
     data = diary[date]
     return (data["content"], data["comment"])
