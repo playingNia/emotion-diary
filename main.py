@@ -2,6 +2,7 @@ from color import BLACK, SHADOW, WHITE, BLUE, RED
 import diary_manager
 
 import tkinter as tk
+from tkinter import messagebox
 import openai
 from datetime import datetime
 import os
@@ -218,18 +219,22 @@ class EmotionDiaryApp:
         question = f"""
                     \"{diary_content}\"
                     """
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4o",
+                messages=[{"role": "system", "content": "너의 이름은 '에이아'야. 유저가 작성한 감정 일기를 보고, 공감과 코멘트를 한국어로 친구처럼(말투를 친한 친구처럼) 남겨 줘."},
+                          {"role": "user", "content": question}],
+            )
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=[{"role": "system", "content": "너의 이름은 '에이아'야. 유저가 작성한 감정 일기를 보고, 공감과 코멘트를 한국어로 친구처럼(말투를 친한 친구처럼) 남겨 줘."},
-                      {"role": "user", "content": question}],
-        )
-
-        self.ais_input.config(state="normal")
-        self.ais_input.delete("1.0", "end")
-        self.ais_input.insert("1.0", response.choices[0]["message"]["content"])
-        self.ais_input.config(state="disabled")
-        diary_manager.set_diary(self.date, self.diary_input.get("1.0", "end-1c"), self.ais_input.get("1.0", "end-1c"))
+            self.ais_input.config(state="normal")
+            self.ais_input.delete("1.0", "end")
+            self.ais_input.insert("1.0", response.choices[0]["message"]["content"])
+            self.ais_input.config(state="disabled")
+            diary_manager.set_diary(self.date, self.diary_input.get("1.0", "end-1c"), self.ais_input.get("1.0", "end-1c"))
+        except openai.error.APIConnectionError:
+            messagebox.showerror("인터넷 연결 오류", "인터넷에 정상적으로 연결되어 있지 않습니다.")
+        except openai.error.AuthenticationError:
+            messagebox.showerror("권한 오류", "사용할 수 없는 OpenAPI key입니다.")
 
     def clear_widgets(self):
         for widget in self.root.winfo_children():
