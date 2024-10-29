@@ -1,4 +1,4 @@
-# pyinstaller --onefile --noconsole --additional-hooks-dir=./hooks main.py
+# pyinstaller --onefile --noconsole --additional-hooks-dir=./hooks --icon="logo.ico" main.py
 
 from color import BLACK, SHADOW, WHITE, BLUE, RED
 import diary_manager
