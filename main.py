@@ -1,3 +1,5 @@
+# pyinstaller --onefile --noconsole --additional-hooks-dir=./hooks main.py
+
 from color import BLACK, SHADOW, WHITE, BLUE, RED
 import diary_manager
 
@@ -222,7 +224,7 @@ class EmotionDiaryApp:
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o",
-                messages=[{"role": "system", "content": "너의 이름은 '에이아'야. 유저가 작성한 감정 일기를 보고, 공감과 코멘트를 한국어로 친구처럼(말투를 친한 친구처럼) 남겨 줘."},
+                messages=[{"role": "system", "content": "너는 유저의 감정 일기에 답글을 달아주는 상담사 '에이아'야. 유저가 작성한 감정 일기를 보고, 공감과 코멘트를 한국어로 친구처럼(말투를 친한 친구처럼) 남겨 줘."},
                           {"role": "user", "content": question}],
             )
 
