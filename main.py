@@ -170,7 +170,7 @@ class EmotionDiaryApp:
         title_right_frame = tk.Frame(title_frame, bg=WHITE)
         title_right_frame.pack(side="right", anchor='e', expand=True, padx=10)
 
-        remove_diary_btn = tk.Button(title_right_frame, text='❌', bg=RED, fg=WHITE, relief="flat", padx=1, command=self.open_diary_page)
+        remove_diary_btn = tk.Button(title_right_frame, text='❌', bg=RED, fg=WHITE, relief="flat", padx=1, command=self.remove_diary)
         remove_diary_btn.pack(side="left", padx=10)
 
         add_diary_btn = tk.Button(title_right_frame, text='✔', bg=BLUE, fg=WHITE, relief="flat", command=self.save_diary)
@@ -210,6 +210,10 @@ class EmotionDiaryApp:
         self.ais_input.delete("1.0", "end")
         self.ais_input.insert("1.0", diary_data[1])
         self.ais_input.config(state="disabled")
+
+    def remove_diary(self):
+        diary_manager.remove_diary(self.date)
+        self.load_main_page()
 
     def save_diary(self):
         diary_manager.set_diary(self.date, self.diary_input.get("1.0", "end-1c"), self.ais_input.get("1.0", "end-1c"))
