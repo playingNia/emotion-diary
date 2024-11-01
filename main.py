@@ -1,4 +1,5 @@
 # pyinstaller --onefile --noconsole --additional-hooks-dir=./hooks --icon="logo.ico" --clean main.py
+import winsound
 
 from color import BLACK, SHADOW, WHITE, BLUE, RED
 import diary_manager
@@ -37,6 +38,7 @@ class EmotionDiaryApp:
         btn.pack()
 
     def submit_api_key(self, key):
+        winsound.Beep(1000, 500)
         if key == "":
             return
 
